@@ -1,0 +1,14 @@
+git clone -b main https://github.com/google-deepmind/meltingpot
+cd meltingpot/
+python3 -m venv pot_env
+source pot_env/bin/activate
+pip install numpy # the setup cannot install it
+make "python_requires='>=3.10'" and comment "numpy" from setup.py
+pip install --editable .[dev]
+pip install gymnasium
+pip install matplotlib
+pip install ray[rllib,default]==2.5.0
+pip install torch
+pip install "pydantic<2"
+pip install tensorflow_probability
+pip install tf_keras
