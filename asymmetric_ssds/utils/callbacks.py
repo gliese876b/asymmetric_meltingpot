@@ -34,13 +34,13 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
                 episode.user_data[agent_id]["rewards"] = []
                 episode.user_data[agent_id]["ext_rewards"] = []
                 episode.user_data[agent_id]["int_rewards"] = []
-                episode.user_data[agent_id]["taggeds"] = []
-                episode.user_data[agent_id]["tag_actions"] = []
+                episode.user_data[agent_id]["is_zappeds"] = []
+                episode.user_data[agent_id]["zap_actions"] = []
                 episode.user_data[agent_id]["clean_actions"] = []
                 episode.user_data[agent_id]["collected_apples"] = []
                 episode.user_data[agent_id]["cleared_waste_cells"] = []
-                episode.user_data[agent_id]["tagged_agents"] = []
-                episode.user_data[agent_id]["type"] = None
+                episode.user_data[agent_id]["num_zapped_agents"] = []
+                episode.user_data[agent_id]["role"] = None
 
         if isinstance(episode, EpisodeV2):
             for agent_id in episode.get_agents():
@@ -49,20 +49,20 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
                     episode.user_data[agent_id]["ext_rewards"].append(episode._last_infos[agent_id].get('ext_reward', 0))
                 if 'int_reward' in episode._last_infos[agent_id].keys():
                     episode.user_data[agent_id]["int_rewards"].append(episode._last_infos[agent_id].get('int_reward', 0))
-                if 'tagged' in episode._last_infos[agent_id].keys():
-                    episode.user_data[agent_id]["taggeds"].append(int(episode._last_infos[agent_id].get('tagged', 0)))
-                if 'tag_action' in episode._last_infos[agent_id].keys():
-                    episode.user_data[agent_id]["tag_actions"].append(int(episode._last_infos[agent_id].get('tag_action', 0)))
+                if 'is_zapped' in episode._last_infos[agent_id].keys():
+                    episode.user_data[agent_id]["is_zappeds"].append(int(episode._last_infos[agent_id].get('is_zapped', 0)))
+                if 'zap_action' in episode._last_infos[agent_id].keys():
+                    episode.user_data[agent_id]["zap_actions"].append(int(episode._last_infos[agent_id].get('zap_action', 0)))
                 if 'clean_action' in episode._last_infos[agent_id].keys():
                     episode.user_data[agent_id]["clean_actions"].append(int(episode._last_infos[agent_id].get('clean_action', 0)))
                 if 'apple_collected' in episode._last_infos[agent_id].keys():
                     episode.user_data[agent_id]["collected_apples"].append(int(episode._last_infos[agent_id].get('apple_collected', 0)))
                 if 'number_of_cleared_waste_cells' in episode._last_infos[agent_id].keys():
                     episode.user_data[agent_id]["cleared_waste_cells"].append(int(episode._last_infos[agent_id].get('number_of_cleared_waste_cells', 0)))
-                if 'number_of_tagged_agents' in episode._last_infos[agent_id].keys():
-                    episode.user_data[agent_id]["tagged_agents"].append(int(episode._last_infos[agent_id].get('number_of_tagged_agents', 0)))
-                if 'type' in episode._last_infos[agent_id].keys():
-                    episode.user_data[agent_id]["type"] = episode._last_infos[agent_id].get('type', None)
+                if 'number_of_zapped_agents' in episode._last_infos[agent_id].keys():
+                    episode.user_data[agent_id]["num_zapped_agents"].append(int(episode._last_infos[agent_id].get('number_of_zapped_agents', 0)))
+                if 'role' in episode._last_infos[agent_id].keys():
+                    episode.user_data[agent_id]["role"] = episode._last_infos[agent_id].get('role', None)
         else:
             for agent_id in episode.get_agents():
                 episode.user_data[agent_id]["rewards"].append(episode.last_reward_for(agent_id))
@@ -70,20 +70,20 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
                     episode.user_data[agent_id]["ext_rewards"].append(episode.last_info_for(agent_id).get('ext_reward', 0))
                 if 'int_reward' in episode.last_info_for(agent_id).keys():
                     episode.user_data[agent_id]["int_rewards"].append(episode.last_info_for(agent_id).get('int_reward', 0))
-                if 'tagged' in episode.last_info_for(agent_id).keys():
-                    episode.user_data[agent_id]["taggeds"].append(int(episode.last_info_for(agent_id).get('tagged', 0)))
-                if 'tag_action' in episode.last_info_for(agent_id).keys():
-                    episode.user_data[agent_id]["tag_actions"].append(int(episode.last_info_for(agent_id).get('tag_action', 0)))
+                if 'is_zapped' in episode.last_info_for(agent_id).keys():
+                    episode.user_data[agent_id]["is_zappeds"].append(int(episode.last_info_for(agent_id).get('is_zapped', 0)))
+                if 'zap_action' in episode.last_info_for(agent_id).keys():
+                    episode.user_data[agent_id]["zap_actions"].append(int(episode.last_info_for(agent_id).get('zap_action', 0)))
                 if 'clean_action' in episode.last_info_for(agent_id).keys():
                     episode.user_data[agent_id]["clean_actions"].append(int(episode.last_info_for(agent_id).get('clean_action', 0)))
                 if 'apple_collected' in episode.last_info_for(agent_id).keys():
                     episode.user_data[agent_id]["collected_apples"].append(int(episode.last_info_for(agent_id).get('apple_collected', 0)))
                 if 'number_of_cleared_waste_cells' in episode.last_info_for(agent_id).keys():
                     episode.user_data[agent_id]["cleared_waste_cells"].append(int(episode.last_info_for(agent_id).get('number_of_cleared_waste_cells', 0)))
-                if 'number_of_tagged_agents' in episode.last_info_for(agent_id).keys():
-                    episode.user_data[agent_id]["tagged_agents"].append(int(episode.last_info_for(agent_id).get('number_of_tagged_agents', 0)))
-                if 'type' in episode.last_info_for(agent_id).keys():
-                    episode.user_data[agent_id]["type"] = episode.last_info_for(agent_id).get('type', None)
+                if 'number_of_zapped_agents' in episode.last_info_for(agent_id).keys():
+                    episode.user_data[agent_id]["num_zapped_agents"].append(int(episode.last_info_for(agent_id).get('number_of_zapped_agents', 0)))
+                if 'role' in episode.last_info_for(agent_id).keys():
+                    episode.user_data[agent_id]["role"] = episode.last_info_for(agent_id).get('role', None)
 
     def on_episode_end(
         self,
@@ -100,13 +100,13 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
         N = len(episode.get_agents())
 
         agent_returns = {}
-        agent_types = {}
+        agent_roles = {}
         for agent_id in episode.get_agents():
-            agent_type = episode.user_data[agent_id]["type"]
-            if agent_type:
-                if agent_type not in agent_types.keys():
-                    agent_types[agent_type] = []
-                agent_types[agent_type].append(agent_id)
+            agent_role = episode.user_data[agent_id]["role"]
+            if agent_role:
+                if agent_role not in agent_roles.keys():
+                    agent_roles[agent_role] = []
+                agent_roles[agent_role].append(agent_id)
 
             if len(episode.user_data[agent_id]["ext_rewards"]) > 0:
                 agent_returns[agent_id] = sum(episode.user_data[agent_id]["ext_rewards"])
@@ -119,13 +119,13 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
                 episode.custom_metrics["int_return_{}".format(agent_id)] = sum(episode.user_data[agent_id]["int_rewards"])
 
         collective_return = sum(agent_returns.values())
-        collective_return_by_type = {}
+        collective_return_by_role = {}
         for agent_id in episode.get_agents():
-            agent_type = episode.user_data[agent_id]["type"]
-            if agent_type:
-                if agent_type not in collective_return_by_type.keys():
-                    collective_return_by_type[agent_type] = 0
-                collective_return_by_type[agent_type] += agent_returns[agent_id]
+            agent_role = episode.user_data[agent_id]["role"]
+            if agent_role:
+                if agent_role not in collective_return_by_role.keys():
+                    collective_return_by_role[agent_role] = 0
+                collective_return_by_role[agent_role] += agent_returns[agent_id]
 
         episode.custom_metrics["collective_return"] = collective_return
         episode.custom_metrics["average_return_per_agent"] = collective_return / N
@@ -154,15 +154,15 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
 
         temp_sum = 0
         for agent_id in episode.get_agents():
-            temp_sum += sum(episode.user_data[agent_id]["taggeds"])
+            temp_sum += sum(episode.user_data[agent_id]["is_zappeds"])
         peace = N - (temp_sum / T)
 
         episode.custom_metrics["peace"] = peace
 
         temp_sum = 0
         for agent_id in episode.get_agents():
-            temp_sum += sum(episode.user_data[agent_id]["tag_actions"])
-        episode.custom_metrics["tag_per_agent"] = temp_sum / N
+            temp_sum += sum(episode.user_data[agent_id]["zap_actions"])
+        episode.custom_metrics["zap_per_agent"] = temp_sum / N
 
         temp_sum = 0
         for agent_id in episode.get_agents():
@@ -186,23 +186,23 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
 
         temp_sum = 0
         for agent_id in episode.get_agents():
-            temp_sum += sum(episode.user_data[agent_id]["tagged_agents"]) / sum(episode.user_data[agent_id]["tag_actions"]) if sum(episode.user_data[agent_id]["tag_actions"]) > 0 else 0
-        episode.custom_metrics["average_tagging_accuracy"] = temp_sum / N
+            temp_sum += sum(episode.user_data[agent_id]["num_zapped_agents"]) / sum(episode.user_data[agent_id]["zap_actions"]) if sum(episode.user_data[agent_id]["zap_actions"]) > 0 else 0
+        episode.custom_metrics["average_zapping_accuracy"] = temp_sum / N
 
-        for type, type_agents in agent_types.items():
-            episode.custom_metrics["collective_return_{}".format(type)] = collective_return_by_type[type]
-            episode.custom_metrics["average_return_per_agent_{}".format(type)] = collective_return_by_type[type] / len(type_agents)
-            episode.custom_metrics["efficiency_{}".format(type)] = collective_return_by_type[type] / T
+        for role, role_agents in agent_roles.items():
+            episode.custom_metrics["collective_return_{}".format(role)] = collective_return_by_role[role]
+            episode.custom_metrics["average_return_per_agent_{}".format(role)] = collective_return_by_role[role] / len(role_agents)
+            episode.custom_metrics["efficiency_{}".format(role)] = collective_return_by_role[role] / T
 
-            equality_by_type = 0
-            for i in type_agents:
-                for j in type_agents:
-                    equality_by_type += abs(agent_returns[i] - agent_returns[j])
-            equality_by_type = 1 - ( equality_by_type / (2 * N * (collective_return_by_type[type] + 0.00001)) )
-            episode.custom_metrics["equality_{}".format(type)] = equality_by_type
+            equality_by_role = 0
+            for i in role_agents:
+                for j in role_agents:
+                    equality_by_role += abs(agent_returns[i] - agent_returns[j])
+            equality_by_role = 1 - ( equality_by_role / (2 * N * (collective_return_by_role[role] + 0.00001)) )
+            episode.custom_metrics["equality_{}".format(role)] = equality_by_role
 
-            sustainability_by_type = 0
-            for agent_id in type_agents:
+            sustainability_by_role = 0
+            for agent_id in role_agents:
                 ti = []
                 for t in range(T):
                     if len(episode.user_data[agent_id]["ext_rewards"]) > 0:
@@ -210,43 +210,43 @@ class AsymmetricSocialOutcomeCallbacks(DefaultCallbacks):
                             ti.append(t)
                     elif episode.user_data[agent_id]["rewards"][t] > 0:
                         ti.append(t)
-                sustainability_by_type += sum(ti) / len(ti) if len(ti) > 0 else 0
-            sustainability_by_type = sustainability_by_type / len(type_agents)
-            episode.custom_metrics["sustainability_{}".format(type)] = sustainability_by_type
+                sustainability_by_role += sum(ti) / len(ti) if len(ti) > 0 else 0
+            sustainability_by_role = sustainability_by_role / len(role_agents)
+            episode.custom_metrics["sustainability_{}".format(role)] = sustainability_by_role
 
             temp_sum = 0
-            for agent_id in type_agents:
-                temp_sum += sum(episode.user_data[agent_id]["taggeds"])
-            peace_by_type = len(type_agents) - (temp_sum / T)
+            for agent_id in role_agents:
+                temp_sum += sum(episode.user_data[agent_id]["is_zappeds"])
+            peace_by_role = len(role_agents) - (temp_sum / T)
 
-            episode.custom_metrics["peace_{}".format(type)] = peace_by_type
-
-            temp_sum = 0
-            for agent_id in type_agents:
-                temp_sum += sum(episode.user_data[agent_id]["tag_actions"])
-            episode.custom_metrics["tag_per_agent_{}".format(type)] = temp_sum / N
+            episode.custom_metrics["peace_{}".format(role)] = peace_by_role
 
             temp_sum = 0
-            for agent_id in type_agents:
+            for agent_id in role_agents:
+                temp_sum += sum(episode.user_data[agent_id]["zap_actions"])
+            episode.custom_metrics["zap_per_agent_{}".format(role)] = temp_sum / N
+
+            temp_sum = 0
+            for agent_id in role_agents:
                 temp_sum += sum(episode.user_data[agent_id]["clean_actions"])
-            episode.custom_metrics["clean_per_agent_{}".format(type)] = temp_sum / N
+            episode.custom_metrics["clean_per_agent_{}".format(role)] = temp_sum / N
 
             temp_sum = 0
-            for agent_id in type_agents:
+            for agent_id in role_agents:
                 temp_sum += sum(episode.user_data[agent_id]["collected_apples"])
-            episode.custom_metrics["apples_per_agent_{}".format(type)] = temp_sum / N
+            episode.custom_metrics["apples_per_agent_{}".format(role)] = temp_sum / N
 
             temp_sum = 0
-            for agent_id in type_agents:
+            for agent_id in role_agents:
                 temp_sum += sum(episode.user_data[agent_id]["cleared_waste_cells"])
-            episode.custom_metrics["cleared_waste_per_agent_{}".format(type)] = temp_sum / N
+            episode.custom_metrics["cleared_waste_per_agent_{}".format(role)] = temp_sum / N
 
             temp_sum = 0
-            for agent_id in type_agents:
+            for agent_id in role_agents:
                 temp_sum += sum(episode.user_data[agent_id]["cleared_waste_cells"]) / sum(episode.user_data[agent_id]["clean_actions"]) if sum(episode.user_data[agent_id]["clean_actions"]) > 0 else 0
-            episode.custom_metrics["average_cleaning_accuracy_{}".format(type)] = temp_sum / N
+            episode.custom_metrics["average_cleaning_accuracy_{}".format(role)] = temp_sum / N
 
             temp_sum = 0
-            for agent_id in type_agents:
-                temp_sum += sum(episode.user_data[agent_id]["tagged_agents"]) / sum(episode.user_data[agent_id]["tag_actions"]) if sum(episode.user_data[agent_id]["tag_actions"]) > 0 else 0
-            episode.custom_metrics["average_tagging_accuracy_{}".format(type)] = temp_sum / N
+            for agent_id in role_agents:
+                temp_sum += sum(episode.user_data[agent_id]["num_zapped_agents"]) / sum(episode.user_data[agent_id]["zap_actions"]) if sum(episode.user_data[agent_id]["zap_actions"]) > 0 else 0
+            episode.custom_metrics["average_zapping_accuracy_{}".format(role)] = temp_sum / N

@@ -22,7 +22,7 @@ class CustomRayEnv(multi_agent_env.MultiAgentEnv):
     # which modes the `render` method supports.
     metadata = {'render.modes': ['rgb_array']}
 
-    def __init__(self, env: dmlab2d.Environment):
+    def __init__(self, env: dmlab2d.Environment, environment_config):
         """Initializes the instance.
 
         Args:
@@ -44,6 +44,7 @@ class CustomRayEnv(multi_agent_env.MultiAgentEnv):
             remove_world_observations=True)
         self.action_space = self._convert_spaces_tuple_to_dict(
             utils.spec_to_space(self._env.action_spec()))
+        self.environment_config = environment_config
         super().__init__()
 
     def _convert_spaces_tuple_to_dict(
@@ -62,16 +63,14 @@ class CustomRayEnv(multi_agent_env.MultiAgentEnv):
             for i, agent_id in enumerate(self._ordered_agent_ids)
         })
 
-
-
     def reset(self, *args, **kwargs):
         """See base class."""
         timestep = self._env.reset()
-        infos = {
-            agent_id: {}
-            for index, agent_id in enumerate(self._ordered_agent_ids)
-        }
-        return convert_timestep_to_observations(timestep), convert_timestep_to_infos(timestep)
+        observations = convert_timestep_to_observations(timestep)
+        infos = convert_timestep_to_infos(timestep)
+        for i, agent_id in enumerate(self._ordered_agent_ids):
+            infos[agent_id]["role"] = self.environment_config["roles"][i]
+        return observations, infos
 
     def step(self, action_dict):
         """See base class."""
@@ -89,6 +88,8 @@ class CustomRayEnv(multi_agent_env.MultiAgentEnv):
 
         observations = convert_timestep_to_observations(timestep)
         infos = convert_timestep_to_infos(timestep)
+        for i, agent_id in enumerate(self._ordered_agent_ids):
+            infos[agent_id]["role"] = self.environment_config["roles"][i]
         return observations, rewards, dones, dones, infos
 
     def close(self):
@@ -130,15 +131,17 @@ def convert_timestep_to_infos(timestep: dm_env.TimeStep) -> Mapping[str, Any]:
             gym_infos[PLAYER_STR_FORMAT.format(index=index)]['clean_action'] = (observation['PLAYER_CLEANED'] > 0)
         if 'PLAYER_ATE_APPLE' in observation:
             gym_infos[PLAYER_STR_FORMAT.format(index=index)]['apple_collected'] = (observation['PLAYER_ATE_APPLE'] > 0)
-        if 'PLAYER_ZAPPED' in observation:
-            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['tagged'] = (observation['PLAYER_ZAPPED'] > 0)
+        if 'PLAYER_IS_ZAPPED' in observation:
+            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['is_zapped'] = (observation['PLAYER_IS_ZAPPED'] > 0)
         if 'NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP' in observation:
-            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['number_of_tagged_agents'] = observation['NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP'].sum()
+            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['number_of_zapped_agents'] = observation['NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP'].sum()
+        if 'PLAYER_CALLED_ZAP' in observation:
+            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['zap_action'] = observation['PLAYER_CALLED_ZAP'] > 0
     return gym_infos
 
 def custom_env_creator(env_config):
     """Outputs an environment for registering."""
     env_config = config_dict.ConfigDict(env_config)
     env = substrate.build(env_config['substrate'], roles=env_config['roles'])
-    env = CustomRayEnv(env)
+    env = CustomRayEnv(env, env_config)
     return env
