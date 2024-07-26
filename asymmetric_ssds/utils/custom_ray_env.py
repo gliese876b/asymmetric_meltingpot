@@ -127,8 +127,8 @@ def convert_timestep_to_infos(timestep: dm_env.TimeStep) -> Mapping[str, Any]:
     gym_infos = {}
     for index, observation in enumerate(timestep.observation):
         gym_infos[PLAYER_STR_FORMAT.format(index=index)] = {}
-        if 'PLAYER_CLEANED' in observation:
-            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['clean_action'] = (observation['PLAYER_CLEANED'] > 0)
+        if 'NUM_CLEARED_WASTE_CELLS' in observation:
+            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['number_of_cleared_waste_cells'] = observation['NUM_CLEARED_WASTE_CELLS'].sum()
         if 'PLAYER_ATE_APPLE' in observation:
             gym_infos[PLAYER_STR_FORMAT.format(index=index)]['apple_collected'] = (observation['PLAYER_ATE_APPLE'] > 0)
         if 'PLAYER_IS_ZAPPED' in observation:
@@ -137,6 +137,8 @@ def convert_timestep_to_infos(timestep: dm_env.TimeStep) -> Mapping[str, Any]:
             gym_infos[PLAYER_STR_FORMAT.format(index=index)]['number_of_zapped_agents'] = observation['NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP'].sum()
         if 'PLAYER_CALLED_ZAP' in observation:
             gym_infos[PLAYER_STR_FORMAT.format(index=index)]['zap_action'] = observation['PLAYER_CALLED_ZAP'] > 0
+        if 'PLAYER_CALLED_CLEAN' in observation:
+            gym_infos[PLAYER_STR_FORMAT.format(index=index)]['clean_action'] = observation['PLAYER_CALLED_CLEAN'] > 0
     return gym_infos
 
 def custom_env_creator(env_config):

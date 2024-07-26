@@ -30,6 +30,8 @@ def policy_mapping_function(agent_id, episode, worker, **kwargs):
 
 def role_to_action_space(role, action_space):
     if role == 'consumer_who_cannot_zap':
+        return spaces.Discrete(action_space.n - 2)
+    elif 'cleaner' not in role:
         return spaces.Discrete(action_space.n - 1)
     return action_space
 
@@ -145,8 +147,8 @@ def start_training(environment_config, experiment_name, alg_name):
             .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_function)
             .resources(num_gpus=1)
             .env_runners(
-                num_cpus_per_env_runner=4,
-                num_env_runners=2,
+                num_cpus_per_env_runner=8,
+                num_env_runners=1,
                 batch_mode="complete_episodes",
                 #rollout_fragment_length=100,
                 preprocessor_pref=None,
@@ -165,7 +167,7 @@ def start_training(environment_config, experiment_name, alg_name):
                 evaluation_sample_timeout_s=320,
                 evaluation_interval=20,
                 evaluation_duration=4,
-                evaluation_num_env_runners=2,
+                evaluation_num_env_runners=1,
                 always_attach_evaluation_results=False
             )
             .fault_tolerance(recreate_failed_env_runners=True, restart_failed_sub_environments=True)
@@ -208,10 +210,10 @@ def start_training(environment_config, experiment_name, alg_name):
             .multi_agent(policies=policies, policy_mapping_fn=policy_mapping_function)
             .resources(num_gpus=1)
             .env_runners(
-                num_cpus_per_env_runner=2,
+                num_cpus_per_env_runner=4,
                 num_env_runners=2,
-                #batch_mode="complete_episodes",
-                rollout_fragment_length=100,
+                batch_mode="complete_episodes",
+                #rollout_fragment_length=100,
                 preprocessor_pref=None,
             )
             #.reporting(metrics_num_episodes_for_smoothing=1)
@@ -435,15 +437,13 @@ if __name__ == "__main__":
     parser.add_argument("-alg", "--algorithm", default="DQN", help="algorithm to train")
     args = vars(parser.parse_args())
 
-    register_env("asymmetric_commons_harvest__open", lambda config: custom_env_creator(config))
+    register_env("asymmetric_clean_up", lambda config: custom_env_creator(config))
     algorithm_name = args['algorithm']
-    experiment_name = "{}_asymmetric_commons_harvest__open_10_consumers".format(algorithm_name)
+    experiment_name = "{}_asymmetric_clean_up_10_consumers".format(algorithm_name)
 
-    substrate_name = "asymmetric_commons_harvest__open"
+    substrate_name = "asymmetric_clean_up"
     #player_roles = substrate.get_config(substrate_name).default_player_roles
-    player_roles = ["consumer"] * 10
-    #player_roles = ["consumer_who_has_apple_reward_advantage"] * 10
-    #player_roles = ["consumer"] * 5 + ["consumer_who_has_apple_reward_advantage"] * 5
+    player_roles = ["cleaner"] * 10
     environment_config = {"substrate": substrate_name, "roles": player_roles}
 
     if args['mode'] == 'train':
@@ -451,4 +451,4 @@ if __name__ == "__main__":
     elif args['mode'] == 'test':
         start_testing(environment_config, args['checkpoint'])
     elif args['mode'] == 'search':
-        start_searching({"substrate": substrate_name, "roles": ["consumer"]})
+        start_searching({"substrate": substrate_name, "roles": ["cleaner"]})
