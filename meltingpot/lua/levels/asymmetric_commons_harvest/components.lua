@@ -308,7 +308,6 @@ function Taste:__init__(kwargs)
       {'name', args.default('Taste')},
       {'role', args.default('consumer'), args.oneOf('consumer', 'consumer_who_has_apple_reward_advantage', 'consumer_who_cannot_zap', 'consumer_who_spawns_inside')},
       {'rewardAmount', args.default(1), args.numberType},
-
   })
   Taste.Base.__init__(self, kwargs)
   self._config.role = kwargs.role
@@ -342,7 +341,6 @@ function Taste:setCumulant()
   local playerIndex = self.gameObject:getComponent('Avatar'):getIndex()
   globalData:setAteThisStep(playerIndex)
 end
-
 
 local Tracker = class.Class(component.Component)
 

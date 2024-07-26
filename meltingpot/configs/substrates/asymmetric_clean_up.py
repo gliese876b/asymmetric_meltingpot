@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Configuration for Costly Clean Up.
+"""Configuration for Asymmetric Clean Up.
 
 Example video: https://youtu.be/TqiJYxOwdxw
 
@@ -97,6 +97,47 @@ CHAR_PREFAB_MAP = {
 }
 
 _COMPASS = ["N", "E", "S", "W"]
+
+ROLE_TO_SPECS = {
+    "consumer": {
+        "appleEatingReward": 1.0,
+        "spawnGroup": "spawnPoints",
+        "postInitialSpawnGroup": "spawnPoints",
+        "colorPalette": [shapes.get_palette(colors.human_readable[-1])]
+    },
+    "consumer_who_has_apple_reward_advantage": {
+        "appleEatingReward": 10.0,
+        "spawnGroup": "spawnPoints",
+        "postInitialSpawnGroup": "spawnPoints",
+        "colorPalette": [shapes.get_palette(colors.human_readable[-2])]
+    },
+    "consumer_who_cannot_zap": {
+        "appleEatingReward": 1.0,
+        "spawnGroup": "spawnPoints",
+        "postInitialSpawnGroup": "spawnPoints",
+        "colorPalette": [shapes.get_palette(colors.human_readable[-3])]
+    },
+    "consumer_who_spawns_inside": {
+        "appleEatingReward": 1.0,
+        "spawnGroup": "insideSpawnPoints",
+        "postInitialSpawnGroup": "insideSpawnPoints",
+        "colorPalette": [shapes.get_palette(colors.human_readable[-4])]
+    },
+    "cleaner": {
+        "appleEatingReward": 1.0,
+        "spawnGroup": "spawnPoints",
+        "postInitialSpawnGroup": "spawnPoints",
+        "cleaningReward": -0.1,
+        "colorPalette": [shapes.get_palette(colors.human_readable[-5])]
+    },
+    "cleaner_who_has_clean_reward_advantage": {
+        "appleEatingReward": 1.0,
+        "spawnGroup": "spawnPoints",
+        "postInitialSpawnGroup": "spawnPoints",
+        "cleaningReward": 0,
+        "colorPalette": [shapes.get_palette(colors.human_readable[-6])]
+    },
+}
 
 SAND = {
     "name": "sand",
@@ -619,10 +660,18 @@ def create_scene():
 
 
 def create_avatar_object(player_idx: int,
-                         target_sprite_self: Dict[str, Any]) -> Dict[str, Any]:
+                         role: str) -> Dict[str, Any]:
   """Create an avatar object that always sees itself as blue."""
   # Lua is 1-indexed.
   lua_index = player_idx + 1
+
+  target_sprite_self = {
+      "name": "Self",
+      "shape": shapes.CUTE_AVATAR,
+      "palette": ROLE_TO_SPECS[role]["colorPalette"][0] if "colorPalette" in ROLE_TO_SPECS[role] else shapes.get_palette(colors.human_readable[player_idx]),
+      "noRotate": True,
+  }
+
 
   # Setup the self vs other sprite mapping.
   source_sprite_self = "Avatar" + str(lua_index)
@@ -659,8 +708,7 @@ def create_avatar_object(player_idx: int,
                   "renderMode": "ascii_shape",
                   "spriteNames": [source_sprite_self],
                   "spriteShapes": [shapes.CUTE_AVATAR],
-                  "palettes": [shapes.get_palette(
-                      human_readable_colors[player_idx])],
+                  "palettes": ROLE_TO_SPECS[role]["colorPalette"] if "colorPalette" in ROLE_TO_SPECS[role] else [shapes.get_palette(colors.human_readable[player_idx])],
                   "noRotates": [True]
               }
           },
@@ -680,7 +728,8 @@ def create_avatar_object(player_idx: int,
                   "index": lua_index,
                   "aliveState": live_state_name,
                   "waitState": "playerWait",
-                  "spawnGroup": "spawnPoints",
+                  "spawnGroup": ROLE_TO_SPECS[role]["spawnGroup"],
+                  "postInitialSpawnGroup": ROLE_TO_SPECS[role]["postInitialSpawnGroup"],
                   "actionOrder": ["move",
                                   "turn",
                                   "fireZap",
@@ -705,13 +754,16 @@ def create_avatar_object(player_idx: int,
               "component": "Zapper",
               "kwargs": {
                   "cooldownTime": 0,
-                  "beamLength": 7,
-                  "beamRadius": 2,
+                  "beamLength": 5,
+                  "beamRadius": 1,
                   "framesTillRespawn": 25,
                   "penaltyForBeingZapped": 0,
                   "rewardForZapping": 0,
                   "removeHitPlayer": True,
               }
+          },
+          {
+              "component": "Tracker",
           },
           {
               "component": "ReadyToShootObservation",
@@ -720,16 +772,17 @@ def create_avatar_object(player_idx: int,
               "component": "Cleaner",
               "kwargs": {
                   "cooldownTime": 0,
-                  "beamLength": 7,
-                  "beamRadius": 2,
-                  "rewardForCleaning": -0.1,
+                  "beamLength": 5,
+                  "beamRadius": 1,
+                  "rewardForCleaning": ROLE_TO_SPECS[role]["cleaningReward"] if "cleaningReward" in ROLE_TO_SPECS[role] else 0,
+                  "role": role,
               }
           },
           {
               "component": "Taste",
               "kwargs": {
-                  "role": "free",
-                  "rewardAmount": 1,
+                  "role": role,
+                  "rewardAmount": ROLE_TO_SPECS[role]["appleEatingReward"],
               }
           },
           {
@@ -754,7 +807,7 @@ def create_avatar_object(player_idx: int,
   })
   # Debug metrics
   metrics.append({
-      "name": "PLAYER_CLEANED",
+      "name": "NUM_CLEARED_WASTE_CELLS",
       "type": "Doubles",
       "shape": [],
       "component": "Cleaner",
@@ -768,11 +821,18 @@ def create_avatar_object(player_idx: int,
       "variable": "player_ate_apple",
   })
   metrics.append({
-      "name": "PLAYER_ZAPPED",
+      "name": "PLAYER_CALLED_ZAP",
       "type": "Doubles",
       "shape": [],
-      "component": "Zapper",
-      "variable": "_coolingTimer", #FIXME: cannot get information about whether the player is zapped or not
+      "component": "Tracker",
+      "variable": "is_action_zap",
+  })
+  metrics.append({
+      "name": "PLAYER_CALLED_CLEAN",
+      "type": "Doubles",
+      "shape": [],
+      "component": "Tracker",
+      "variable": "is_action_clean",
   })
   metrics.append({
       "name": "NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP",
@@ -782,11 +842,11 @@ def create_avatar_object(player_idx: int,
       "variable": "num_others_player_zapped_this_step",
   })
   metrics.append({
-      "name": "NUM_OTHERS_WHO_ATE_THIS_STEP",
+      "name": "PLAYER_IS_ZAPPED",
       "type": "Doubles",
       "shape": [],
-      "component": "AllNonselfCumulants",
-      "variable": "num_others_who_ate_this_step",
+      "component": "Tracker",
+      "variable": "is_zapped",
   })
 
   # Add the metrics reporter.
@@ -798,12 +858,11 @@ def create_avatar_object(player_idx: int,
   return avatar_object
 
 
-def create_avatar_objects(num_players):
+def create_avatar_objects(roles: Sequence[str]):
   """Returns list of avatar objects of length 'num_players'."""
   avatar_objects = []
-  for player_idx in range(0, num_players):
-    game_object = create_avatar_object(player_idx,
-                                       TARGET_SPRITE_SELF)
+  for player_idx, role in enumerate(roles):
+    game_object = create_avatar_object(player_idx, role)
     avatar_objects.append(game_object)
 
   return avatar_objects
@@ -821,11 +880,12 @@ def get_config():
       "READY_TO_SHOOT",
       # Global switching signals for puppeteers.
       "NUM_OTHERS_WHO_CLEANED_THIS_STEP",
-      "PLAYER_CLEANED",
+      "NUM_CLEARED_WASTE_CELLS",
       "PLAYER_ATE_APPLE",
+      "PLAYER_CALLED_ZAP",
+      "PLAYER_CALLED_CLEAN",
       "NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP",
-      "NUM_OTHERS_WHO_ATE_THIS_STEP",
-      "PLAYER_ZAPPED"
+      "PLAYER_IS_ZAPPED"
   ]
   config.global_observation_names = [
       "WORLD.RGB",
@@ -838,18 +898,19 @@ def get_config():
       "READY_TO_SHOOT": specs.OBSERVATION["READY_TO_SHOOT"],
       # Global switching signals for puppeteers.
       "NUM_OTHERS_WHO_CLEANED_THIS_STEP": specs.float64(),
-      "PLAYER_CLEANED": specs.float64(),
+      "NUM_CLEARED_WASTE_CELLS": specs.float64(),
       "PLAYER_ATE_APPLE": specs.float64(),
+      "PLAYER_CALLED_ZAP": specs.float64(),
+      "PLAYER_CALLED_CLEAN": specs.float64(),
       "NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP": specs.float64(),
-      "NUM_OTHERS_WHO_ATE_THIS_STEP": specs.float64(),
-      "PLAYER_ZAPPED": specs.float64(),
+      "PLAYER_IS_ZAPPED": specs.float64(),
       # Debug only (do not use the following observations in policies).
       "WORLD.RGB": specs.rgb(168, 240),
   })
 
   # The roles assigned to each player.
-  config.valid_roles = frozenset({"default"})
-  config.default_player_roles = ("default",) * 7
+  config.valid_roles = frozenset({"consumer", "consumer_who_has_apple_reward_advantage", "consumer_who_cannot_zap", "consumer_who_spawns_inside", "cleaner", "cleaner_who_has_clean_reward_advantage"})
+  config.default_player_roles = ("consumer",) * 10
 
   return config
 
@@ -863,16 +924,16 @@ def build(
   num_players = len(roles)
   # Build the rest of the substrate definition.
   substrate_definition = dict(
-      levelName="costly_clean_up",
+      levelName="asymmetric_clean_up",
       levelDirectory="meltingpot/lua/levels",
       numPlayers=num_players,
       # Define upper bound of episode length since episodes end stochastically.
-      maxEpisodeLengthFrames=5000,
+      maxEpisodeLengthFrames=1000,
       spriteSize=8,
       topology="BOUNDED",  # Choose from ["BOUNDED", "TORUS"],
       simulation={
           "map": ASCII_MAP,
-          "gameObjects": create_avatar_objects(num_players),
+          "gameObjects": create_avatar_objects(roles=roles),
           "scene": create_scene(),
           "prefabs": create_prefabs(),
           "charPrefabMap": CHAR_PREFAB_MAP,

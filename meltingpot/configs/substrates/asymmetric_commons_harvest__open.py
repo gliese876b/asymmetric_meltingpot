@@ -93,25 +93,25 @@ ROLE_TO_SPECS = {
         "appleEatingReward": 1.0,
         "spawnGroup": "spawnPoints",
         "postInitialSpawnGroup": "spawnPoints",
-        "colorPalette": [shapes.get_palette(colors.human_readable[-4])]
+        "colorPalette": [shapes.get_palette(colors.human_readable[-1])]
     },
     "consumer_who_has_apple_reward_advantage": {
         "appleEatingReward": 10.0,
         "spawnGroup": "spawnPoints",
         "postInitialSpawnGroup": "spawnPoints",
-        "colorPalette": [shapes.get_palette(colors.human_readable[-3])]
+        "colorPalette": [shapes.get_palette(colors.human_readable[-2])]
     },
     "consumer_who_cannot_zap": {
         "appleEatingReward": 1.0,
         "spawnGroup": "spawnPoints",
         "postInitialSpawnGroup": "spawnPoints",
-        "colorPalette": [shapes.get_palette(colors.human_readable[-2])]
+        "colorPalette": [shapes.get_palette(colors.human_readable[-3])]
     },
     "consumer_who_spawns_inside": {
         "appleEatingReward": 1.0,
         "spawnGroup": "insideSpawnPoints",
         "postInitialSpawnGroup": "insideSpawnPoints",
-        "colorPalette": [shapes.get_palette(colors.human_readable[-1])]
+        "colorPalette": [shapes.get_palette(colors.human_readable[-4])]
     }
 }
 
@@ -621,7 +621,6 @@ def get_config():
       "PLAYER_ATE_APPLE",
       "PLAYER_CALLED_ZAP",
       "NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP",
-      "NUM_OTHERS_WHO_ATE_THIS_STEP",
       "PLAYER_IS_ZAPPED"
   ]
   config.global_observation_names = [
@@ -636,7 +635,6 @@ def get_config():
       "PLAYER_ATE_APPLE": specs.float64(),
       "PLAYER_CALLED_ZAP": specs.float64(),
       "NUM_OTHERS_PLAYER_ZAPPED_THIS_STEP": specs.float64(),
-      "NUM_OTHERS_WHO_ATE_THIS_STEP": specs.float64(),
       "PLAYER_IS_ZAPPED": specs.float64(),
       # Debug only (do not use the following observations in policies).
       "WORLD.RGB": specs.rgb(144, 192),
@@ -644,7 +642,7 @@ def get_config():
 
   # The roles assigned to each player.
   config.valid_roles = frozenset({"consumer", "consumer_who_has_apple_reward_advantage", "consumer_who_cannot_zap", "consumer_who_spawns_inside"})
-  config.default_player_roles = ("consumer",) * 7
+  config.default_player_roles = ("consumer",) * 10
 
   return config
 

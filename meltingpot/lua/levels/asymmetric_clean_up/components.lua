@@ -143,15 +143,11 @@ function DirtCleaning:onHit(hittingGameObject, hitName)
   if self.gameObject:getState() == 'dirt' and hitName == 'cleanHit' then
     self.gameObject:setState('dirtWait')
     -- Trigger role-specific logic if applicable.
-    if hittingGameObject:hasComponent('Taste') then
-      hittingGameObject:getComponent('Taste'):cleaned()
-    end
     if hittingGameObject:hasComponent('Cleaner') then
       hittingGameObject:getComponent('Cleaner'):setCumulant()
     end
     local avatar = hittingGameObject:getComponent('Avatar')
-    events:add('player_cleaned', 'dict',
-               'player_index', avatar:getIndex()) -- int
+    events:add('player_cleaned', 'dict', 'player_index', avatar:getIndex()) -- int
     -- return `true` to prevent the beam from passing through a hit dirt.
     return true
   end
@@ -175,6 +171,7 @@ function Cleaner:__init__(kwargs)
       {'beamLength', args.positive},
       {'beamRadius', args.positive},
       {'rewardForCleaning', args.numberType},
+      {'role', args.default('consumer'), args.oneOf('consumer', 'consumer_who_has_apple_reward_advantage', 'consumer_who_cannot_zap', 'consumer_who_spawns_inside', 'cleaner', 'cleaner_who_has_clean_reward_advantage')},
   })
   Cleaner.Base.__init__(self, kwargs)
 
@@ -182,6 +179,7 @@ function Cleaner:__init__(kwargs)
   self._config.beamLength = kwargs.beamLength
   self._config.beamRadius = kwargs.beamRadius
   self._config.rewardForCleaning = kwargs.rewardForCleaning
+  self._config.role = kwargs.role
 end
 
 function Cleaner:addHits(worldConfig)
@@ -213,10 +211,8 @@ function Cleaner:registerUpdaters(updaterRegistry)
         else
           if actions['fireClean'] == 1 then
             self._coolingTimer = self._config.cooldownTime
-            local avatar = self.gameObject:getComponent('Avatar')
-            avatar:addReward(self._config.rewardForCleaning)
-            self.gameObject:hitBeam(
-                'cleanHit', self._config.beamLength, self._config.beamRadius)
+            self.gameObject:getComponent('Cleaner'):cleaned()
+            self.gameObject:hitBeam('cleanHit', self._config.beamLength, self._config.beamRadius)
           end
         end
       end
@@ -235,6 +231,15 @@ function Cleaner:registerUpdaters(updaterRegistry)
       updateFn = resetCumulant,
       priority = 400,
   }
+end
+
+function Cleaner:cleaned()
+  if string.find(self._config.role, 'cleaner') then
+    self.gameObject:getComponent('Avatar'):addReward(self._config.rewardForCleaning)
+  end
+  if self._config.role == 'consumer' then
+    self.gameObject:getComponent('Avatar'):addReward(0.0)
+  end
 end
 
 function Cleaner:reset()
@@ -399,8 +404,7 @@ function Edible:onEnter(enteringGameObject, contactName)
       local avatarComponent = enteringGameObject:getComponent('Avatar')
       -- Trigger role-specific logic if applicable.
       if enteringGameObject:hasComponent('Taste') then
-        enteringGameObject:getComponent('Taste'):consumed(
-          self._config.rewardForEating)
+        enteringGameObject:getComponent('Taste'):consumed(self._config.rewardForEating)
       else
         avatarComponent:addReward(self._config.rewardForEating)
       end
@@ -420,7 +424,7 @@ local Taste = class.Class(component.Component)
 function Taste:__init__(kwargs)
   kwargs = args.parse(kwargs, {
       {'name', args.default('Taste')},
-      {'role', args.default('free'), args.oneOf('free', 'cleaner', 'consumer')},
+      {'role', args.default('consumer'), args.oneOf('consumer', 'consumer_who_has_apple_reward_advantage', 'consumer_who_cannot_zap', 'consumer_who_spawns_inside', 'cleaner', 'cleaner_who_has_clean_reward_advantage')},
       {'rewardAmount', args.default(1), args.numberType},
 
   })
@@ -439,19 +443,8 @@ function Taste:registerUpdaters(updaterRegistry)
   }
 end
 
-function Taste:cleaned()
-  if self._config.role == 'cleaner' then
-    self.gameObject:getComponent('Avatar'):addReward(self._config.rewardAmount)
-  end
-  if self._config.role == 'consumer' then
-    self.gameObject:getComponent('Avatar'):addReward(0.0)
-  end
-end
-
 function Taste:consumed(edibleDefaultReward)
-  if self._config.role == 'cleaner' then
-    self.gameObject:getComponent('Avatar'):addReward(0.0)
-  elseif self._config.role == 'consumer' then
+  if string.find(self._config.role, 'consumer') or string.find(self._config.role, 'cleaner') then
     self.gameObject:getComponent('Avatar'):addReward(self._config.rewardAmount)
   else
     self.gameObject:getComponent('Avatar'):addReward(edibleDefaultReward)
@@ -467,6 +460,47 @@ function Taste:setCumulant()
   local playerIndex = self.gameObject:getComponent('Avatar'):getIndex()
   globalData:setAteThisStep(playerIndex)
 end
+
+local Tracker = class.Class(component.Component)
+
+function Tracker:__init__(kwargs)
+  kwargs = args.parse(kwargs, {
+      {'name', args.default('Tracker')},
+  })
+  Tracker.Base.__init__(self, kwargs)
+
+  self.is_zapped = 0
+  self.is_action_zap = 0
+  self.is_action_clean = 0
+end
+
+function Tracker:reset()
+  self.is_zapped = 0
+  self.is_action_zap = 0
+  self.is_action_clean = 0
+end
+
+function Tracker:preUpdate()
+  if self.gameObject:getComponent('Avatar'):isAlive() then
+    self.is_zapped = 0
+
+    local playerVolatileVariables = (self.gameObject:getComponent('Avatar'):getVolatileData())
+    local actions = playerVolatileVariables.actions
+    if actions['fireZap'] == 1 then
+      self.is_action_zap = 1
+    else
+      self.is_action_zap = 0
+    end
+    if actions['fireClean'] == 1 then
+      self.is_action_clean = 1
+    else
+      self.is_action_clean = 0
+    end
+  else
+    self.is_zapped = 1
+  end
+end
+
 
 local GlobalData = class.Class(component.Component)
 
@@ -577,6 +611,7 @@ local allComponents = {
     RiverMonitor = RiverMonitor,
     DirtSpawner = DirtSpawner,
     GlobalData = GlobalData,
+    Tracker=Tracker
 }
 
 component_registry.registerAllComponents(allComponents)
